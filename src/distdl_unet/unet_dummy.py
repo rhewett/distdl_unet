@@ -1,9 +1,9 @@
 import torch
 import torch.nn
 
-from layers import Concatenate
-from unet_base import UNetBase
-from unet_base import UNetLevelBase
+from .layers import Concatenate
+from distdl_unet import UNetBase
+from distdl_unet import UNetLevelBase
 
 class DummyLayer(torch.nn.Module):
 

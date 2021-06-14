@@ -10,4 +10,4 @@ class Concatenate(torch.nn.Module):
 
     def forward(self, *args):
 
-        return torch.cat(args, self.axis)
+        return torch.cat(*args, self.axis)

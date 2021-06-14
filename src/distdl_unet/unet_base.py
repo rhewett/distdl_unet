@@ -33,6 +33,8 @@ class UNetBase(torch.nn.Module):
         y_f = self.unet(x_f)
         output = self.output_map(y_f)
 
+        return output
+
 
 class UNetLevelBase(torch.nn.Module):
 
@@ -130,9 +132,11 @@ class UNetLevelBase(torch.nn.Module):
         y_f = self.pre_smooth(x_f)
         y_c = self.restriction(y_f)
 
-        for sublevel in self.sublevel_levels:
+        for sublevel in self.sublevels:
             y_c = sublevel(y_c)
 
         y_c = self.prolongation(y_c)
         y_f = self.correction((y_f, y_c))
         y_f = self.post_smooth(y_f)
+
+        return y_f

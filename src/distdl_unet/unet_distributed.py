@@ -3,12 +3,12 @@ import torch.nn
 
 import distdl
 
-from layers import Concatenate
-from unet_base import UNetBase
-from unet_base import UNetLevelBase
+from .layers import Concatenate
+from distdl_unet import UNetBase
+from distdl_unet import UNetLevelBase
 
 _layer_type_map = {
-    "conv": (None, distdl.nn.DistributedConv1d, distdl.nn.DistributedConv2d, distdl.nn.DistributedConv3d)
+    "conv": (None, distdl.nn.DistributedConv1d, distdl.nn.DistributedConv2d, distdl.nn.DistributedConv3d),
     "pool": (None, distdl.nn.DistributedMaxPool1d, distdl.nn.DistributedMaxPool2d, distdl.nn.DistributedMaxPool3d)
 }
 
@@ -18,8 +18,8 @@ class DistributedUNet(UNetBase):
 
         self.P = P
         self.feature_dimension = len(P.shape[2:])
-        self.ConvType = _layer_type_map["conv"](feature_dimension)
-        self.PoolType = _layer_type_map["pool"](feature_dimension)
+        self.ConvType = _layer_type_map["conv"][feature_dimension]
+        self.PoolType = _layer_type_map["pool"][feature_dimension]
 
         super(DistrubutedUNet, self).__init__(*args, **kwargs)
 
@@ -31,7 +31,7 @@ class DistributedUNet(UNetBase):
                              out_channels=self.base_channels,
                              kernel_size=3, padding=1)
         norm = distdl.nn.DistributedBatchNorm(self.P,
-                                              num_features=self.out_channels)
+                                              num_features=self.base_channels)
         acti = torch.nn.ReLU(inplace=True)
         return torch.nn.Sequential(conv, norm, acti)
 
@@ -58,8 +58,8 @@ class DistributedUNetLevel(UNetLevelBase):
 
         self.P = P
         self.feature_dimension = len(P.shape[2:])
-        self.ConvType = _layer_type_map["conv"](feature_dimension)
-        self.PoolType = _layer_type_map["pool"](feature_dimension)
+        self.ConvType = _layer_type_map["conv"][feature_dimension]
+        self.PoolType = _layer_type_map["pool"][feature_dimension]
 
         super(DistributedUNetLevel, self).__init__(*args, **kwargs)
 

@@ -1,14 +1,14 @@
 import torch
 import torch.nn
 
-from layers import Concatenate
-from unet_base import UNetBase
-from unet_base import UNetLevelBase
+from .layers import Concatenate
+from distdl_unet import UNetBase
+from distdl_unet import UNetLevelBase
 
 _layer_type_map = {
-    "conv": (None, torch.nn.Conv1d, torch.nn.Conv2d, torch.nn.Conv3d)
-    "pool": (None, torch.nn.MaxPool1d, torch.nn.MaxPool2d, torch.nn.MaxPool3d)
-    "norm": (None, torch.nn.BatchNorm1d, torch.nn.BatchNorm2d, torch.nn.BatchNorm3d)
+    "conv": (None, torch.nn.Conv1d, torch.nn.Conv2d, torch.nn.Conv3d),
+    "pool": (None, torch.nn.MaxPool1d, torch.nn.MaxPool2d, torch.nn.MaxPool3d),
+    "norm": (None, torch.nn.BatchNorm1d, torch.nn.BatchNorm2d, torch.nn.BatchNorm3d),
 }
 
 class ClassicalUNet(UNetBase):
@@ -16,9 +16,9 @@ class ClassicalUNet(UNetBase):
     def __init__(self, feature_dimension, *args, **kwargs):
 
         self.feature_dimension = feature_dimension
-        self.ConvType = _layer_type_map["conv"](feature_dimension)
-        self.PoolType = _layer_type_map["pool"](feature_dimension)
-        self.NormType = _layer_type_map["norm"](feature_dimension)
+        self.ConvType = _layer_type_map["conv"][feature_dimension]
+        self.PoolType = _layer_type_map["pool"][feature_dimension]
+        self.NormType = _layer_type_map["norm"][feature_dimension]
 
         super(ClassicalUNet, self).__init__(*args, **kwargs)
 
@@ -27,7 +27,7 @@ class ClassicalUNet(UNetBase):
         conv = self.ConvType(in_channels=self.in_channels,
                              out_channels=self.base_channels,
                              kernel_size=3, padding=1)
-        norm = self.NormType(num_features=self.out_channels)
+        norm = self.NormType(num_features=self.base_channels)
         acti = torch.nn.ReLU(inplace=True)
         return torch.nn.Sequential(conv, norm, acti)
 
@@ -52,9 +52,9 @@ class ClassicalUNetLevel(UNetLevelBase):
     def __init__(self, feature_dimension, *args, **kwargs):
 
         self.feature_dimension = feature_dimension
-        self.ConvType = _layer_type_map["conv"](feature_dimension)
-        self.PoolType = _layer_type_map["pool"](feature_dimension)
-        self.NormType = _layer_type_map["norm"](feature_dimension)
+        self.ConvType = _layer_type_map["conv"][feature_dimension]
+        self.PoolType = _layer_type_map["pool"][feature_dimension]
+        self.NormType = _layer_type_map["norm"][feature_dimension]
 
         super(ClassicalUNetLevel, self).__init__(*args, **kwargs)
 
