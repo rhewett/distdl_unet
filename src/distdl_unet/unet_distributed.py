@@ -4,6 +4,7 @@ import torch.nn
 import distdl
 
 from .layers import Concatenate
+from .output import DistributedNetworkOutput
 from distdl_unet import UNetBase
 from distdl_unet import UNetLevelBase
 
@@ -12,28 +13,32 @@ _layer_type_map = {
     "pool": (None, distdl.nn.DistributedMaxPool1d, distdl.nn.DistributedMaxPool2d, distdl.nn.DistributedMaxPool3d)
 }
 
+_relu_inplace = True
+
 class DistributedUNet(UNetBase):
 
-    def __init__(self, P, *args, **kwargs):
+    def __init__(self, P_root, P, *args, **kwargs):
 
+        self.P_root = P_root
         self.P = P
         self.feature_dimension = len(P.shape[2:])
-        self.ConvType = _layer_type_map["conv"][feature_dimension]
-        self.PoolType = _layer_type_map["pool"][feature_dimension]
+        self.ConvType = _layer_type_map["conv"][self.feature_dimension]
+        self.PoolType = _layer_type_map["pool"][self.feature_dimension]
 
-        super(DistrubutedUNet, self).__init__(*args, **kwargs)
+        super(DistributedUNet, self).__init__(*args, **kwargs)
 
 
     def assemble_input_map(self):
 
+        scatter = distdl.nn.DistributedTranspose(self.P_root, self.P)
         conv = self.ConvType(self.P,
                              in_channels=self.in_channels,
                              out_channels=self.base_channels,
                              kernel_size=3, padding=1)
         norm = distdl.nn.DistributedBatchNorm(self.P,
                                               num_features=self.base_channels)
-        acti = torch.nn.ReLU(inplace=True)
-        return torch.nn.Sequential(conv, norm, acti)
+        acti = torch.nn.ReLU(inplace=_relu_inplace)
+        return torch.nn.Sequential(scatter, conv, norm, acti)
 
     def assemble_unet(self):
         return DistributedUNetLevel(self.P,
@@ -48,8 +53,10 @@ class DistributedUNet(UNetBase):
         # Original study does not have these.  Also note kernel_size=1 above.
         # norm = distdl.nn.DistributedBatchNorm(self.P,
         #                                       num_features=self.out_channels)
-        # acti = torch.nn.ReLU(inplace=True)
-        return torch.nn.Sequential(conv)  #, norm, acti)
+        # acti = torch.nn.ReLU(inplace=_relu_inplace)
+        gather = distdl.nn.DistributedTranspose(self.P, self.P_root)
+        out = DistributedNetworkOutput(self.P)
+        return torch.nn.Sequential(conv, gather, out)  #, norm, acti)
 
 
 class DistributedUNetLevel(UNetLevelBase):
@@ -58,8 +65,8 @@ class DistributedUNetLevel(UNetLevelBase):
 
         self.P = P
         self.feature_dimension = len(P.shape[2:])
-        self.ConvType = _layer_type_map["conv"][feature_dimension]
-        self.PoolType = _layer_type_map["pool"][feature_dimension]
+        self.ConvType = _layer_type_map["conv"][self.feature_dimension]
+        self.PoolType = _layer_type_map["pool"][self.feature_dimension]
 
         super(DistributedUNetLevel, self).__init__(*args, **kwargs)
 
@@ -72,7 +79,7 @@ class DistributedUNetLevel(UNetLevelBase):
                              kernel_size=3, padding=1)
         norm = distdl.nn.DistributedBatchNorm(self.P,
                                               num_features=channels)
-        acti = torch.nn.ReLU(inplace=True)
+        acti = torch.nn.ReLU(inplace=_relu_inplace)
 
         return torch.nn.Sequential(conv, norm, acti)
 
@@ -109,13 +116,13 @@ class DistributedUNetLevel(UNetLevelBase):
                              kernel_size=3, padding=1)
         norm = distdl.nn.DistributedBatchNorm(self.P,
                                               num_features=out_channels)
-        acti = torch.nn.ReLU(inplace=True)
+        acti = torch.nn.ReLU(inplace=_relu_inplace)
         return torch.nn.Sequential(pool, conv, norm, acti)
 
     def assemble_prolongation(self):
 
-        in_channels = self.channels(self.level)
-        out_channels = self.channels(self.level-1)
+        in_channels = self.channels(self.level+1)
+        out_channels = self.channels(self.level)
 
         up = distdl.nn.DistributedUpsample(self.P,
                                            scale_factor=2)
@@ -126,7 +133,7 @@ class DistributedUNetLevel(UNetLevelBase):
         # Original study does not have these.  Also note kernel_size=1 above.
         # norm = distdl.nn.DistributedBatchNorm(self.P,
         #                                       num_features=out_channels)
-        # acti = torch.nn.ReLU(inplace=True)
+        # acti = torch.nn.ReLU(inplace=_relu_inplace)
         return torch.nn.Sequential(up, conv)  #, norm, acti)
 
     def assemble_correction(self):
@@ -141,7 +148,7 @@ class DistributedUNetLevel(UNetLevelBase):
                              kernel_size=3, padding=1)
         norm = distdl.nn.DistributedBatchNorm(self.P,
                                               num_features=out_channels)
-        acti = torch.nn.ReLU(inplace=True)
+        acti = torch.nn.ReLU(inplace=_relu_inplace)
         return torch.nn.Sequential(add, conv, norm, acti)
 
     def instantiate_sublevel(self, order):
