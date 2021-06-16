@@ -19,9 +19,6 @@ timer = LoggingTimer()
 input_features = tuple([int(v) for v in sys.argv[2:]])
 feature_dimension = len(input_features)
 
-sample_spacing = [np.linspace(0, 1, f) for f in input_features]
-sample_grid = np.meshgrid(*sample_spacing)
-
 #################################
 
 depth = 5
@@ -49,6 +46,9 @@ optimizer = torch.optim.Adam(parameters,lr=0.0001)
 criterion = torch.nn.BCEWithLogitsLoss()
 
 #################################
+
+sample_spacing = [np.linspace(0, 1, f) for f in input_features]
+sample_grid = np.meshgrid(*sample_spacing)
 
 n_ellipses_target = 3
 n_ellipses_noise = 2

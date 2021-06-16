@@ -13,7 +13,11 @@ _layer_type_map = {
     "pool": (None, distdl.nn.DistributedMaxPool1d, distdl.nn.DistributedMaxPool2d, distdl.nn.DistributedMaxPool3d)
 }
 
-_relu_inplace = True
+# If this is true, Autograd does not like the inplaceness of the halo exchage
+# My gut feeling is that the halo exchange is more expensive memory-wise
+# than ReLU, so I prefer to keep the halo exchange as inplace.
+# https://github.com/distdl/distdl/issues/199
+_relu_inplace = False
 
 class DistributedUNet(UNetBase):
 
