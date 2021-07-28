@@ -71,38 +71,45 @@ unet = DistributedUNet(P_root, P_unet,
 n_batch = 1
 batch_size = 1
 
+scatter = distdl.nn.DistributedTranspose(P_root, P_unet)
+
 MPI.COMM_WORLD.Barrier()
-if P_root.active:
+with torch.no_grad():
+    if P_root.active:
 
-    sample_spacing = [np.linspace(0, 1, f) for f in input_features]
-    sample_grid = np.meshgrid(*sample_spacing)
+        sample_spacing = [np.linspace(0, 1, f) for f in input_features]
+        sample_grid = np.meshgrid(*sample_spacing)
 
-    n_ellipses_target = 3
-    n_ellipses_noise = 2
+        n_ellipses_target = 3
+        n_ellipses_noise = 2
 
-    timer.start("data gen")
-    batches = list()
-    for i in range(n_batch):
-        batch = list()
-        for j in range(batch_size):
-            # Add an image-mask tuple to the batch
-            batch.append(gen_data(sample_grid, n_ellipses_target, n_ellipses_noise))
-        img = torch.cat([im for im, ma in batch],dim=0)
-        mask = torch.cat([ma for im, ma in batch],dim=0)
+        timer.start("data gen")
+        batches = list()
+        for i in range(n_batch):
+            batch = list()
+            for j in range(batch_size):
+                # Add an image-mask tuple to the batch
+                batch.append(gen_data(sample_grid, n_ellipses_target, n_ellipses_noise))
+            img = torch.cat([im for im, ma in batch],dim=0)
+            img = scatter(img)
+            mask = torch.cat([ma for im, ma in batch],dim=0)
+            mask = scatter(mask)
 
-        batches.append((img, mask))
-    timer.stop("data gen", input_features)
-else:
-    timer.start("data gen")
-    batches = list()
-    for i in range(n_batch):
-        batch = list()
-        for j in range(batch_size):
-            img = distdl.utilities.torch.zero_volume_tensor(batch_size)
-            mask = distdl.utilities.torch.zero_volume_tensor(batch_size)
+            batches.append((img, mask))
+        timer.stop("data gen", input_features)
+    else:
+        timer.start("data gen")
+        batches = list()
+        for i in range(n_batch):
+            batch = list()
+            for j in range(batch_size):
+                img = distdl.utilities.torch.zero_volume_tensor(batch_size)
+                img = scatter(img)
+                mask = distdl.utilities.torch.zero_volume_tensor(batch_size)
+                mask = scatter(mask)
 
-        batches.append((img, mask))
-    timer.stop("data gen", input_features)
+            batches.append((img, mask))
+        timer.stop("data gen", input_features)
 
 MPI.COMM_WORLD.Barrier()
 
@@ -117,7 +124,7 @@ if not parameters:
     parameters = [torch.nn.Parameter(torch.zeros(1))]
 
 optimizer = torch.optim.Adam(parameters,lr=0.0001)
-criterion = torch.nn.BCEWithLogitsLoss()
+criterion = distdl.nn.DistributedBCEWithLogitsLoss(P_unet)
 
 ################################
 
@@ -141,14 +148,14 @@ for j in range(n_epoch):
         timer.stop("forward", f"{j}, {i}")
 
         timer.start("loss")
-        if P_root.active:
-            loss = criterion(out, mask)
-            loss_value = loss.item()
-            iou_value = iou(out>0.5, mask>0)
-            print(f"Loss: {loss_value}\tIOU: {iou_value}")
-        else:
-            loss = out.clone()
+        loss = criterion(out, mask)
+        loss_value = loss.item()
         timer.stop("loss", f"{j}, {i}")
+
+        if P_root.active:
+            # iou_value = iou(out>0.5, mask>0)
+            # print(f"Loss: {loss_value}\tIOU: {iou_value}")
+            print(f"Loss: {loss_value}")
 
         timer.start("adjoint")
         loss.backward()

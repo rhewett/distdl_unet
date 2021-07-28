@@ -34,7 +34,6 @@ class DistributedUNet(UNetBase):
 
     def assemble_input_map(self):
 
-        scatter = distdl.nn.DistributedTranspose(self.P_root, self.P)
         conv = self.ConvType(self.P,
                              in_channels=self.in_channels,
                              out_channels=self.base_channels,
@@ -42,7 +41,7 @@ class DistributedUNet(UNetBase):
         norm = distdl.nn.DistributedBatchNorm(self.P,
                                               num_features=self.base_channels)
         acti = torch.nn.ReLU(inplace=_relu_inplace)
-        return torch.nn.Sequential(scatter, conv, norm, acti)
+        return torch.nn.Sequential(conv, norm, acti)
 
     def assemble_unet(self):
         return DistributedUNetLevel(self.P,
@@ -58,9 +57,8 @@ class DistributedUNet(UNetBase):
         # norm = distdl.nn.DistributedBatchNorm(self.P,
         #                                       num_features=self.out_channels)
         # acti = torch.nn.ReLU(inplace=_relu_inplace)
-        gather = distdl.nn.DistributedTranspose(self.P, self.P_root)
-        out = DistributedNetworkOutput(self.P)
-        return torch.nn.Sequential(conv, gather, out)  #, norm, acti)
+        # out = DistributedNetworkOutput(self.P)
+        return torch.nn.Sequential(conv)  #, norm, acti)
 
 
 class DistributedUNetLevel(UNetLevelBase):
