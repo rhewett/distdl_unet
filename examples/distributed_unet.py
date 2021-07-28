@@ -15,13 +15,14 @@ from distdl_unet.logging_timer import MPILoggingTimer
 from random_ellipses import gen_data
 from eval import iou
 
+# n is total features, will be divided amongst workers
 # program_name logfile.csv nf1 nf2 ... nfd pf1 pf2 ... pfd
 print(sys.argv)
 
-# Setup logging output
 outfile = sys.argv[1]
-timer = MPILoggingTimer()
 
+# Setup logging output
+timer = MPILoggingTimer()
 
 # Parse configuration inputs
 input_info = [int(v) for v in sys.argv[2:]]
@@ -51,7 +52,7 @@ P_unet = P_base.create_cartesian_topology_partition(P_unet_shape)
 
 #################################
 
-depth = 1
+depth = 5
 in_channels = 1
 base_channels = 64
 out_channels = 1
@@ -107,7 +108,7 @@ MPI.COMM_WORLD.Barrier()
 
 #################################
 
-n_epoch = 1
+n_epoch = 5
 
 parameters = [p for p in unet.parameters()]
 

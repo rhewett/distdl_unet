@@ -10,7 +10,6 @@ from distdl_unet.logging_timer import LoggingTimer
 from random_ellipses import gen_data
 from eval import iou
 
-print(sys.argv)
 
 outfile = sys.argv[1]
 
@@ -26,8 +25,8 @@ in_channels = 1
 base_channels = 64
 out_channels = 1
 
-nu_1 = 2
-nu_2 = 2
+nu_1 = 1
+nu_2 = 1
 nu_e = 1
 mu = 1
 
@@ -37,15 +36,7 @@ unet = ClassicalUNet(feature_dimension, depth, in_channels, base_channels, out_c
 #################################
 
 n_batch = 1
-n_epoch = 5
 batch_size = 1
-
-parameters = [p for p in unet.parameters()]
-optimizer = torch.optim.Adam(parameters,lr=0.0001)
-
-criterion = torch.nn.BCEWithLogitsLoss()
-
-#################################
 
 sample_spacing = [np.linspace(0, 1, f) for f in input_features]
 sample_grid = np.meshgrid(*sample_spacing)
@@ -67,6 +58,15 @@ for i in range(n_batch):
 timer.stop("data gen", input_features)
 
 ################################
+
+n_epoch = 5
+
+parameters = [p for p in unet.parameters()]
+optimizer = torch.optim.Adam(parameters,lr=0.0001)
+
+criterion = torch.nn.BCEWithLogitsLoss()
+
+#################################
 
 for j in range(n_epoch):
 
