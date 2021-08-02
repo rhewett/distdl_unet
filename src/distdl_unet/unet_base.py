@@ -1,10 +1,10 @@
 import torch
 import torch.nn
 
-class UNetBase(torch.nn.Module):
+class MuNetBase(torch.nn.Module):
 
     def __init__(self, levels, in_channels, base_channels, out_channels, **level_kwargs):
-        super(UNetBase, self).__init__()
+        super(MuNetBase, self).__init__()
 
         self.levels = levels
 
@@ -15,13 +15,13 @@ class UNetBase(torch.nn.Module):
         self.level_kwargs = level_kwargs
 
         self.input_map = self.assemble_input_map()
-        self.unet = self.assemble_unet()
+        self.unet = self.assemble_munet()
         self.output_map = self.assemble_output_map()
 
     def assemble_input_map(self):
         raise NotImplementedError()
 
-    def assemble_unet(self):
+    def assemble_munet(self):
         raise NotImplementedError()
 
     def assemble_output_map(self):
@@ -36,12 +36,12 @@ class UNetBase(torch.nn.Module):
         return output
 
 
-class UNetLevelBase(torch.nn.Module):
+class MuNetLevelBase(torch.nn.Module):
 
     def __init__(self, max_levels, level, order, base_channels,
                  nu_1=1, nu_2=1, nu_e=1, mu=1, reuse_sublevels=False):
 
-        super(UNetLevelBase, self).__init__()
+        super(MuNetLevelBase, self).__init__()
 
         self.max_levels = max_levels
         self.level = level

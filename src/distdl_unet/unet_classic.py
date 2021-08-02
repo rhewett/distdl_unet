@@ -2,8 +2,8 @@ import torch
 import torch.nn
 
 from .layers import Concatenate
-from distdl_unet import UNetBase
-from distdl_unet import UNetLevelBase
+from distdl_unet import MuNetBase
+from distdl_unet import MuNetLevelBase
 
 _layer_type_map = {
     "conv": (None, torch.nn.Conv1d, torch.nn.Conv2d, torch.nn.Conv3d),
@@ -11,7 +11,7 @@ _layer_type_map = {
     "norm": (None, torch.nn.BatchNorm1d, torch.nn.BatchNorm2d, torch.nn.BatchNorm3d),
 }
 
-class ClassicalUNet(UNetBase):
+class ClassicalUNet(MuNetBase):
 
     def __init__(self, feature_dimension, *args, **kwargs):
 
@@ -31,7 +31,7 @@ class ClassicalUNet(UNetBase):
         acti = torch.nn.ReLU(inplace=True)
         return torch.nn.Sequential(conv, norm, acti)
 
-    def assemble_unet(self):
+    def assemble_munet(self):
         return ClassicalUNetLevel(self.feature_dimension,
                                   self.levels, 0, 0, self.base_channels,
                                   **self.level_kwargs)
@@ -47,7 +47,7 @@ class ClassicalUNet(UNetBase):
         return torch.nn.Sequential(conv)  #, norm, acti)
 
 
-class ClassicalUNetLevel(UNetLevelBase):
+class ClassicalUNetLevel(MuNetLevelBase):
 
     def __init__(self, feature_dimension, *args, **kwargs):
 

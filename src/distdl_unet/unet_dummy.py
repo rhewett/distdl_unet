@@ -2,8 +2,8 @@ import torch
 import torch.nn
 
 from .layers import Concatenate
-from distdl_unet import UNetBase
-from distdl_unet import UNetLevelBase
+from distdl_unet import MuNetBase
+from distdl_unet import MuNetLevelBase
 
 class DummyLayer(torch.nn.Module):
 
@@ -39,31 +39,31 @@ class DummyLayer(torch.nn.Module):
 
         return f"DummyLayer({fi} x {ci} -> {fo} x {co})"
 
-class DummyUNet(UNetBase):
+class DummyMuNet(MuNetBase):
 
     def __init__(self, feature_dimension, *args, **kwargs):
         self.feature_dimension = feature_dimension
 
-        super(DummyUNet, self).__init__(*args, **kwargs)
+        super(DummyMuNet, self).__init__(*args, **kwargs)
 
     def assemble_input_map(self):
 
         return DummyLayer(self.feature_dimension, self.in_channels, self.base_channels, 0, "S")
 
-    def assemble_unet(self):
-        return DummyUNetLevel(self.feature_dimension, 
+    def assemble_munet(self):
+        return DummyMuNetLevel(self.feature_dimension, 
                               self.levels, 0, 0, self.base_channels, **self.level_kwargs)
 
     def assemble_output_map(self):
         return DummyLayer(self.feature_dimension, self.base_channels, self.in_channels, 0, "S")
 
 
-class DummyUNetLevel(UNetLevelBase):
+class DummyMuNetLevel(MuNetLevelBase):
 
     def __init__(self, feature_dimension, *args, **kwargs):
         self.feature_dimension = feature_dimension
 
-        super(DummyUNetLevel, self).__init__(*args, **kwargs)
+        super(DummyMuNetLevel, self).__init__(*args, **kwargs)
 
     def _smoothing_block(self):
 
@@ -111,7 +111,7 @@ class DummyUNetLevel(UNetLevelBase):
         return DummyLayer(self.feature_dimension, in_channels, out_channels, self.level, "S")
 
     def instantiate_sublevel(self, order):
-        return DummyUNetLevel(self.feature_dimension,
+        return DummyMuNetLevel(self.feature_dimension,
                               self.max_levels, self.level+1, order, self.base_channels,
                               nu_1=self.nu_1, nu_2=self.nu_2, nu_e=self.nu_e, mu=self.mu,
                               reuse_sublevels=self.reuse_sublevels)

@@ -1,10 +1,10 @@
 __version__ = '0.0.0-dev'
 
 from . import logging_timer  # noqa: F401
-from .unet_base import UNetBase  # noqa: F401
-from .unet_base import UNetLevelBase  # noqa: F401
+from .unet_base import MuNetBase  # noqa: F401
+from .unet_base import MuNetLevelBase  # noqa: F401
 from .unet_classic import ClassicalUNet  # noqa: F401
-from .unet_dummy import DummyUNet  # noqa: F401
+from .unet_dummy import DummyMuNet  # noqa: F401
 
 try:
 	import distdl

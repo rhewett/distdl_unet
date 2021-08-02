@@ -5,8 +5,8 @@ import distdl
 
 from .layers import Concatenate
 from .output import DistributedNetworkOutput
-from distdl_unet import UNetBase
-from distdl_unet import UNetLevelBase
+from distdl_unet import MuNetBase
+from distdl_unet import MuNetLevelBase
 
 _layer_type_map = {
     "conv": (None, distdl.nn.DistributedConv1d, distdl.nn.DistributedConv2d, distdl.nn.DistributedConv3d),
@@ -19,7 +19,7 @@ _layer_type_map = {
 # https://github.com/distdl/distdl/issues/199
 _relu_inplace = False
 
-class DistributedUNet(UNetBase):
+class DistributedUNet(MuNetBase):
 
     def __init__(self, P_root, P, *args, **kwargs):
 
@@ -43,7 +43,7 @@ class DistributedUNet(UNetBase):
         acti = torch.nn.ReLU(inplace=_relu_inplace)
         return torch.nn.Sequential(conv, norm, acti)
 
-    def assemble_unet(self):
+    def assemble_munet(self):
         return DistributedUNetLevel(self.P,
                                     self.levels, 0, 0, self.base_channels, **self.level_kwargs)
 
@@ -61,7 +61,7 @@ class DistributedUNet(UNetBase):
         return torch.nn.Sequential(conv)  #, norm, acti)
 
 
-class DistributedUNetLevel(UNetLevelBase):
+class DistributedUNetLevel(MuNetLevelBase):
 
     def __init__(self, P, *args, **kwargs):
 
