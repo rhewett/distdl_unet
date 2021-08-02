@@ -50,7 +50,7 @@ class DummyMuNet(MuNetBase):
 
         return DummyLayer(self.feature_dimension, self.in_channels, self.base_channels, 0, "S")
 
-    def assemble_munet(self):
+    def assemble_cycle(self):
         return DummyMuNetLevel(self.feature_dimension, 
                               self.levels, 0, 0, self.base_channels, **self.level_kwargs)
 

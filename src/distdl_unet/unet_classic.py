@@ -31,7 +31,7 @@ class ClassicalUNet(MuNetBase):
         acti = torch.nn.ReLU(inplace=True)
         return torch.nn.Sequential(conv, norm, acti)
 
-    def assemble_munet(self):
+    def assemble_cycle(self):
         return ClassicalUNetLevel(self.feature_dimension,
                                   self.levels, 0, 0, self.base_channels,
                                   **self.level_kwargs)

@@ -43,7 +43,7 @@ class DistributedUNet(MuNetBase):
         acti = torch.nn.ReLU(inplace=_relu_inplace)
         return torch.nn.Sequential(conv, norm, acti)
 
-    def assemble_munet(self):
+    def assemble_cycle(self):
         return DistributedUNetLevel(self.P,
                                     self.levels, 0, 0, self.base_channels, **self.level_kwargs)
 

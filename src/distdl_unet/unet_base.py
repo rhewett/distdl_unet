@@ -15,13 +15,13 @@ class MuNetBase(torch.nn.Module):
         self.level_kwargs = level_kwargs
 
         self.input_map = self.assemble_input_map()
-        self.unet = self.assemble_munet()
+        self.cycle = self.assemble_cycle()
         self.output_map = self.assemble_output_map()
 
     def assemble_input_map(self):
         raise NotImplementedError()
 
-    def assemble_munet(self):
+    def assemble_cycle(self):
         raise NotImplementedError()
 
     def assemble_output_map(self):
@@ -30,7 +30,7 @@ class MuNetBase(torch.nn.Module):
     def forward(self, input):
 
         x_f = self.input_map(input)
-        y_f = self.unet(x_f)
+        y_f = self.cycle(x_f)
         output = self.output_map(y_f)
 
         return output
